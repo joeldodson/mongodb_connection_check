@@ -1,16 +1,20 @@
 "use strict";
 
-function ppobj(obj) {
-    if (typeof obj === "object") {
-        return JSON.stringify(obj, null, 4);
-    } else {
-        return obj;
-    }
-}
+/**
+ * this program is for trying mongodb driver directly vs using mongoose.
+ **/
+
+let log4js = require("log4js");
+let commandLineArgs = require('command-line-args');
+let express = require("express");
+
+let db = require("./db");
+let ppobj = require("./utils").ppobj;
+
 
 let loggerConfig = {
     "appenders": [
-        {   "type":"console"},
+        {"type": "console"},
         {
             "type": "file",
             "filename": "check_conn.log",
@@ -20,26 +24,26 @@ let loggerConfig = {
     ]
 };
 
-let log4js = require("log4js");
 log4js.configure(loggerConfig);
 let logger = log4js.getLogger("main");
-let mlogger = require("mongodb").Logger;
-mlogger.setLevel("debug");
-mlogger.setCurrentLogger(function (msg, context) {
-    logger.debug("MongoDBLog: " + ppobj(context));
-});
 
-let express = require("express");
-let mongo = require("mongodb");
-let mongoClient = require("mongodb").MongoClient;
+// cla => command line arguments
+let claDefinitions = [
+    {name: "driver", alias: "d", type: String}
+];
 
-let dbUrl = process.env.CHECK_CONN_DB_URL;
+let clas = commandLineArgs(claDefinitions);
+
+logger.info("using driver: " + clas.driver);
+db.connect(clas.driver);
+
 let app = express();
-let mongoDb = undefined;
 
 app.get("/ntokens", function (req, res) {
     logger.info("return how many tokens in the push_notification database");
-    return res.status(200).json({"status": "yea!!"});
+    db.ntokens(function(err,nt) {
+        return res.status(200).json({"nTokens": nt});
+    });
 });
 
 app.get("/dbstats", function (req, res) {

@@ -24,7 +24,7 @@ let log4js = require("log4js");
 log4js.configure(loggerConfig);
 let logger = log4js.getLogger("main");
 let mlogger = require("mongodb").Logger;
-mlogger.setLevel("debug");
+mlogger.setLevel("warn");
 mlogger.setCurrentLogger(function (msg, context) {
     logger.debug("MongoDBLog: " + ppobj(context));
 });
@@ -36,10 +36,13 @@ let mongoClient = require("mongodb").MongoClient;
 let dbUrl = process.env.CHECK_CONN_DB_URL;
 let app = express();
 let mongoDb = undefined;
+let mongooseDb = require("./db");
 
 app.get("/ntokens", function (req, res) {
     logger.info("return how many tokens in the push_notification database");
-    return res.status(200).json({"status": "yea!!"});
+    mongooseDb.getTokenCount(function(err, count) {
+        return res.status(200).json({"erroer": err, "Token Count": count});
+    });
 });
 
 app.get("/dbstats", function (req, res) {
